@@ -4,6 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { Role } from '../generated/prisma/client';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserRepository } from './users.repository';
@@ -29,11 +30,11 @@ export class UsersService {
     });
   }
 
-  async findAll(pagination: OffsetPaginationParams) {
-    // Run both queries in parallel — count() has no dependency on the data query
+  async findAll(pagination: OffsetPaginationParams, role?: Role) {
+    // Ajout IA: le role est optionnel et permet de filtrer les users en base.
     const [data, total] = await Promise.all([
-      this.user.findAll(pagination),
-      this.user.count(),
+      this.user.findAll(pagination, role),
+      this.user.count(role),
     ]);
 
     return {
@@ -48,7 +49,6 @@ export class UsersService {
   async findAllWithCursor(params: CursorPaginationParams) {
     const items = await this.user.findAllWithCursor(params);
 
-    // The extra item confirms there is a next page — strip it before returning
     const hasNextPage = items.length > params.limit;
     const data = hasNextPage ? items.slice(0, params.limit) : items;
     const nextCursor = hasNextPage ? (data[data.length - 1]?.id ?? null) : null;
@@ -80,7 +80,7 @@ export class UsersService {
   async addToWishlist(userId: string, parkId: string) {
     const user = await this.user.findById(userId);
     if (!user) throw new NotFoundException(`User ${userId} not found`);
-    const park = await this.parks.findOne(parkId); // throws 404 if park not found
+    const park = await this.parks.findOne(parkId);
     if (!park.isActive) {
       throw new BadRequestException('Cannot add an inactive park to wishlist');
     }
@@ -97,5 +97,14 @@ export class UsersService {
     const result = await this.user.findWishlist(userId);
     if (!result) throw new NotFoundException(`User ${userId} not found`);
     return result.wishlist;
+  }
+
+  async updateRole(id: string, role: Role) {
+    const user = await this.user.findById(id);
+    if (!user) {
+      throw new NotFoundException(`User ${id} not found`);
+    }
+    // Ajout IA: changement de role centralise dans le service.
+    return this.user.updateRole(id, role);
   }
 }

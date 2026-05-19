@@ -8,10 +8,12 @@ import {
   Patch,
   Post,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { UpdateUserRoleDto } from './dto/update-user-role.dto';
 import { UserResponseDto } from './dto/user-response.dto';
 import { ParkResponseDto } from '../parks/dto/park-response.dto';
 import { OffsetPaginationPipe } from '../common/pipes/offset-pagination.pipe';
@@ -20,6 +22,10 @@ import { CursorPaginationPipe } from '../common/pipes/cursor-pagination.pipe';
 import type { CursorPaginationParams } from '../common/pipes/cursor-pagination.pipe';
 import { UUIDParam } from '../common/decorators/uuid-param.decorator';
 import { DeleteRoute } from '../common/decorators/delete-route.decorator';
+import { Role } from '../generated/prisma/client';
+import { Roles } from '../common/decorators/roles.decorator';
+import { RolesGuard } from '../common/guards/roles.guards';
+import { RoleQueryPipe } from '../common/pipes/role-query.pipe';
 
 @Controller('users')
 export class UsersController {
@@ -31,12 +37,16 @@ export class UsersController {
     return UserResponseDto.fromPrisma(user);
   }
 
+  // Ajout IA: route reservee aux admins, avec filtre optionnel par role.
+  @UseGuards(RolesGuard)
+  @Roles(Role.ADMIN)
   @Get()
   async findAll(
     @Query(OffsetPaginationPipe) pagination: OffsetPaginationParams,
+    @Query('role', RoleQueryPipe) role?: Role,
   ) {
     const { data, total, page, limit, totalPages } =
-      await this.usersService.findAll(pagination);
+      await this.usersService.findAll(pagination, role);
     return {
       data: data.map((user) => UserResponseDto.fromPrisma(user)),
       total,
@@ -70,6 +80,18 @@ export class UsersController {
   @Patch(':id')
   async update(@UUIDParam('id') id: string, @Body() dto: UpdateUserDto) {
     const user = await this.usersService.update(id, dto);
+    return UserResponseDto.fromPrisma(user);
+  }
+
+  // Ajout IA: endpoint dedie au changement de role utilisateur.
+  @UseGuards(RolesGuard)
+  @Roles(Role.ADMIN)
+  @Patch(':id/role')
+  async updateRole(
+    @UUIDParam('id') id: string,
+    @Body() dto: UpdateUserRoleDto,
+  ) {
+    const user = await this.usersService.updateRole(id, dto.role);
     return UserResponseDto.fromPrisma(user);
   }
 

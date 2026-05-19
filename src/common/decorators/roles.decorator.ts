@@ -1,4 +1,5 @@
 import { SetMetadata } from '@nestjs/common';
+import { Role } from '../../generated/prisma/client';
 
 /**
  * TYPE 2 — SetMetadata
@@ -27,4 +28,5 @@ import { SetMetadata } from '@nestjs/common';
  *   return required.some(role => user.roles.includes(role));
  */
 export const ROLES_KEY = 'roles';
-export const Roles = (...roles: string[]) => SetMetadata(ROLES_KEY, roles);
+// Ajout IA: typage des roles avec l'enum Prisma pour eviter les valeurs invalides.
+export const Roles = (...roles: Role[]) => SetMetadata(ROLES_KEY, roles);

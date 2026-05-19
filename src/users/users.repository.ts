@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { User, Prisma } from '../generated/prisma/client';
+import { Role, User, Prisma } from '../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { OffsetPaginationParams } from '../common/pipes/offset-pagination.pipe';
 import { CursorPaginationParams } from '../common/pipes/cursor-pagination.pipe';
@@ -8,8 +8,10 @@ import { CursorPaginationParams } from '../common/pipes/cursor-pagination.pipe';
 export class UserRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  findAll(pagination: OffsetPaginationParams): Promise<User[]> {
+  findAll(pagination: OffsetPaginationParams, role?: Role): Promise<User[]> {
+    // Ajout IA: filtre optionnel par role directement dans Prisma.
     return this.prisma.user.findMany({
+      where: role ? { role } : undefined,
       skip: pagination.skip,
       take: pagination.limit,
       orderBy: { createdAt: 'desc' },
@@ -27,8 +29,10 @@ export class UserRepository {
     });
   }
 
-  count(): Promise<number> {
-    return this.prisma.user.count();
+  count(role?: Role): Promise<number> {
+    return this.prisma.user.count({
+      where: role ? { role } : undefined,
+    });
   }
 
   findById(id: string): Promise<User | null> {
@@ -69,6 +73,14 @@ export class UserRepository {
     return this.prisma.user.findUnique({
       where: { id: userId },
       include: { wishlist: { take: 20, orderBy: { name: 'asc' } } },
+    });
+  }
+
+  updateRole(id: string, role: Role): Promise<User> {
+    // Ajout IA: persistence du nouveau role utilisateur.
+    return this.prisma.user.update({
+      where: { id },
+      data: { role },
     });
   }
 }

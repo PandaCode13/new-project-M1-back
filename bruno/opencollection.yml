@@ -1,23 +1,23 @@
 opencollection: 1.0.0
 
 info:
-  name: Live coding
+  name: Live coding 2
 config:
   proxy:
     inherit: true
     config:
       protocol: http
-      hostname: ""
-      port: ""
+      hostname: ''
+      port: ''
       auth:
-        username: ""
-        password: ""
-      bypassProxy: ""
+        username: ''
+        password: ''
+      bypassProxy: ''
 
 request:
   headers:
     - name: Origin
-      value: "{{host}}"
+      value: '{{host}}'
 bundled: false
 extensions:
   bruno:
@@ -27,4 +27,4 @@ extensions:
     presets:
       request:
         type: http
-        url: "{{host}}"
+        url: '{{host}}'

@@ -5,4 +5,4 @@ variables:
   - secret: true
     name: token
   - name: currentUserEmail
-    value: aileen_connelly@hotmail.com
+    value: norma79@hotmail.com

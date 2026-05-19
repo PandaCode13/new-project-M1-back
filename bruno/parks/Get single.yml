@@ -1,0 +1,19 @@
+info:
+  name: Get single
+  type: http
+  seq: 2
+
+http:
+  method: GET
+  url: "{{host}}/{{baseRoute}}/:roller_coaster_id"
+  params:
+    - name: roller_coaster_id
+      value: e4a0cf59-744f-4f5f-91ab-4173b0dd145a
+      type: path
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

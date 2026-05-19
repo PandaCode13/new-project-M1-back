@@ -1,0 +1,25 @@
+info:
+  name: Create
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{host}}/{{baseRoute}}"
+  body:
+    type: json
+    data: |-
+      {
+        "name": "Tonnerre 2 Zeus",
+        "heightRequirementCm": 120,
+        "maxSpeedKmh": 84,
+        "thrillLevel": 3,
+        "parkId": "e4a0cf59-744f-4f5f-91ab-4173b0dd145a"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

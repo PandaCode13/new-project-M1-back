@@ -1,0 +1,164 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id            String   @id @default(uuid())
+  email         String   @unique @db.VarChar(255)
+  // required by better-auth; populated from firstName + lastName on user creation
+  name          String   @default("") @db.VarChar(255)
+  emailVerified Boolean  @default(false)
+  image         String?
+  // nullable: better-auth sign-up only sends `name`, not split first/last
+  firstName     String?  @db.VarChar(100)
+  lastName      String?  @db.VarChar(100)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  tickets  Ticket[]
+  reviews  Review[]
+  // "UserWishlist" names the implicit pivot table Prisma creates (_UserWishlist).
+  // Explicit naming is required here because User could have multiple relations to Park
+  // (e.g. wishlist, visited parks). Without a name Prisma cannot tell them apart and
+  // the build fails with an ambiguity error.
+  wishlist Park[]    @relation("UserWishlist")
+  sessions Session[]
+  accounts Account[]
+
+  @@map("users")
+}
+
+// ─── better-auth tables ────────────────────────────────────────────────────────
+
+model Session {
+  id        String   @id
+  expiresAt DateTime
+  token     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+  @@index([userId])
+}
+
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?   @db.Text
+  refreshToken          String?   @db.Text
+  idToken               String?   @db.Text
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@map("accounts")
+  @@index([userId])
+}
+
+model Verification {
+  id         String    @id
+  identifier String
+  value      String    @db.Text
+  expiresAt  DateTime
+  createdAt  DateTime? @default(now())
+  updatedAt  DateTime? @updatedAt
+
+  @@map("verifications")
+  @@index([identifier])
+}
+
+model Jwks {
+  id         String    @id
+  publicKey  String    @db.Text
+  privateKey String    @db.Text
+  createdAt  DateTime
+  expiresAt  DateTime?
+
+  @@map("jwks")
+}
+
+model Park {
+  id        String   @id @default(uuid())
+  name      String   @db.VarChar(200)
+  city      String   @db.VarChar(100)
+  country   String   @db.VarChar(100)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  rollerCoasters RollerCoaster[]
+  tickets        Ticket[]
+  wishlistedBy   User[]          @relation("UserWishlist") // inverse side of the same implicit m2m
+
+  @@map("parks")
+}
+
+model RollerCoaster {
+  id                  String   @id @default(uuid())
+  name                String   @db.VarChar(200)
+  heightRequirementCm Int
+  maxSpeedKmh         Float
+  thrillLevel         Int      @default(1)
+  isOperational       Boolean  @default(true)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  park   Park   @relation(fields: [parkId], references: [id], onDelete: Cascade)
+  parkId String
+
+  reviews Review[]
+
+  @@map("roller_coasters")
+}
+
+model Ticket {
+  id        String   @id @default(uuid())
+  visitDate DateTime
+  price     Float
+  createdAt DateTime @default(now())
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Restrict)
+  userId String
+
+  park   Park   @relation(fields: [parkId], references: [id], onDelete: Restrict)
+  parkId String
+
+  @@map("tickets")
+}
+
+model Review {
+  id      String  @id @default(uuid())
+  rating  Int
+  comment String? @db.Text
+
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId          String
+  rollerCoaster   RollerCoaster @relation(fields: [rollerCoasterId], references: [id], onDelete: Cascade)
+  rollerCoasterId String
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, rollerCoasterId])
+  @@map("reviews")
+}

@@ -1,0 +1,41 @@
+# ── Runtime artifacts — rebuilt inside the image ──────────────────────────────
+node_modules
+dist
+coverage
+.nyc_output
+
+# ── Version control ───────────────────────────────────────────────────────────
+.git
+.gitignore
+
+# ── Secrets — NEVER bake environment files into an image ──────────────────────
+.env
+.env.*
+.env.local
+.env.production
+.env.staging
+
+# ── Yarn internal state — not needed in the build context ─────────────────────
+.yarn/cache
+.yarn/unplugged
+.yarn/build-state.yml
+.yarn/install-state.gz
+
+# ── Logs ──────────────────────────────────────────────────────────────────────
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ── IDE / OS ──────────────────────────────────────────────────────────────────
+.vscode
+.idea
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# ── Documentation ─────────────────────────────────────────────────────────────
+README.md
+Makefile
+docker-compose*.yml

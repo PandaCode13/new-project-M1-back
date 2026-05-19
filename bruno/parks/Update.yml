@@ -1,0 +1,26 @@
+info:
+  name: Update
+  type: http
+  seq: 4
+
+http:
+  method: PATCH
+  url: "{{host}}/{{baseRoute}}/:roller_coaster_id"
+  params:
+    - name: roller_coaster_id
+      value: e4a0cf59-744f-4f5f-91ab-4173b0dd145a
+      type: path
+  body:
+    type: json
+    data: |-
+      {
+        "country": "France"
+        
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

@@ -1,0 +1,10 @@
+info:
+  name: roller-coasters
+  type: folder
+  seq: 3
+
+request:
+  auth: inherit
+  variables:
+    - name: baseRoute
+      value: roller-coasters

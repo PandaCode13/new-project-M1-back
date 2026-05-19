@@ -1,0 +1,25 @@
+info:
+  name: Update
+  type: http
+  seq: 4
+
+http:
+  method: PATCH
+  url: "{{host}}/{{baseRoute}}/:roller_coaster_id"
+  params:
+    - name: roller_coaster_id
+      value: 7216765b-e01e-450f-9877-31f7070dd4cb
+      type: path
+  body:
+    type: json
+    data: |-
+      {
+        "name": "Tonnerre 2 Zeus"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

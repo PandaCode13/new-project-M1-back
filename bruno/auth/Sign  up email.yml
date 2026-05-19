@@ -1,0 +1,35 @@
+info:
+  name: Sign  up email
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{host}}/{{baseRoute}}/sign-up/email"
+  body:
+    type: json
+    data: |
+      {
+        "name":"{{$randomFullName}}",
+        "email":"{{$randomEmail}}",
+        "password":"azertyuiop"
+        
+        
+      }
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        let data = res.getBody();
+        if (data) {
+          if (data.user && data.user.email) {
+            bru.setEnvVar("currentUserEmail", data.user.email, { persist: true })
+          }
+        }
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

@@ -1,0 +1,69 @@
+# docker-compose.yml — Development
+#
+# Usage:
+#   docker compose up --build          # foreground
+#   docker compose up -d --build       # background
+#   docker compose logs -f             # follow logs
+#   docker compose down                # stop & remove containers
+#
+# Requires a .env file — copy .env.example and fill in values.
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    ports:
+      # Bind to loopback only — not broadcast to the local network.
+      - "127.0.0.1:3000:3000"
+      # Node.js inspector — attach VSCode or Chrome DevTools to this port.
+      - "127.0.0.1:9229:9229"
+    volumes:
+      # Bind-mount source directories so nest start --watch picks up edits
+      # without rebuilding the image. src/ also contains schema
+      - ./src:/app/src
+      - ./test:/app/test
+      - ./prisma:/app/prisma
+      # dist/ exposed to host so VSCode can read source maps for debugging.
+      # deleteOutDir must be false in nest-cli.json — rmdir fails on a bind-mount.
+      - ./dist:/app/dist
+    environment:
+      NODE_ENV: ${NODE_ENV}
+      PORT: ${PORT}
+      # Override DATABASE_URL to use the Docker-internal service name.
+      # The .env value (localhost:4321) is for host-side CLI tools only.
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
+      BETTER_AUTH_URL: ${BETTER_AUTH_URL}
+      BETTER_AUTH_TRUSTED_ORIGINS: ${BETTER_AUTH_TRUSTED_ORIGINS}
+    # db:migrate runs first (blocking), then the dev server starts.
+    # Never reverse the order — start:debug blocks and migrate would never run.
+    command: sh -c "yarn db:migrate && yarn start:debug"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      # Expose on loopback so CLI tools (prisma studio, psql) can connect
+      # from the host using DATABASE_URL in .env.
+      - "127.0.0.1:4321:5432"
+    volumes:
+      # Bind-mount keeps data on the host filesystem — safe from docker compose down -v.
+      - ./.postgres:/var/lib/postgresql
+    healthcheck:
+      # $$VAR: double-$ escapes interpolation at compose parse time so the
+      # variable is resolved by the container shell at runtime instead.
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped

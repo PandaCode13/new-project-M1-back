@@ -1,0 +1,8 @@
+name: Development
+variables:
+  - name: host
+    value: http://localhost:3000
+  - secret: true
+    name: token
+  - name: currentUserEmail
+    value: aileen_connelly@hotmail.com

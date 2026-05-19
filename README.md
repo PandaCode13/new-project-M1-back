@@ -1,98 +1,174 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# CoasterPlay API
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+REST API de gestion de parcs d'attractions, construite comme base de live coding pour le cours M1 Dev API.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## Stack
 
-## Description
+| Couche | Technologie |
+|---|---|
+| Runtime | Node.js 25 / TypeScript |
+| Framework | NestJS 11 |
+| ORM | Prisma 7 |
+| Base de données | PostgreSQL 18 |
+| Auth | Better Auth (email/password + JWT) |
+| Tests | Jest + Testcontainers |
+| HTTP client | Bruno |
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## Domaine
 
-## Project setup
-
-```bash
-$ yarn install
+```
+Park ──< RollerCoaster ──< Review
+  │                          │
+  └──< Ticket >── User ──────┘
 ```
 
-## Compile and run the project
+- **Parks** : parcs d'attractions (nom, ville, pays, statut actif)
+- **RollerCoasters** : montagnes russes rattachées à un parc (hauteur minimale, vitesse max, niveau de sensations)
+- **Reviews** : avis d'un utilisateur sur une montagne russe (note + commentaire, une seule par user/coaster)
+- **Tickets** : entrées d'un utilisateur pour un parc (date de visite, prix)
+- **Users** : gérés via Better Auth (inscription, connexion, JWT)
+
+## Prérequis
+
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) (recommandé)
+- ou Node.js 20+ et Yarn 4 installés localement
+
+## Démarrage rapide (Docker)
 
 ```bash
-# development
-$ yarn run start
+# 1. Configurer l'environnement
+cp .env.sample .env
 
-# watch mode
-$ yarn run start:dev
+# 2. Lancer l'API + la base de données
+docker compose up --build
 
-# production mode
-$ yarn run start:prod
+# L'API est disponible sur http://localhost:3000
+# L'inspecteur Node.js est disponible sur le port 9229
 ```
 
-## Run tests
+Au démarrage, Docker exécute automatiquement les migrations Prisma avant de lancer le serveur.
+
+## Démarrage local (sans Docker)
 
 ```bash
-# unit tests
-$ yarn run test
+# 1. Installer les dépendances
+yarn install
 
-# e2e tests
-$ yarn run test:e2e
+# 2. Configurer l'environnement
+cp .env.sample .env
+# Éditer .env : pointer DATABASE_URL vers localhost:4321 (voir commentaire dans le fichier)
 
-# test coverage
-$ yarn run test:cov
+# 3. Démarrer la base de données seule
+docker compose up postgres -d
+
+# 4. Appliquer les migrations et générer le client Prisma
+yarn db:migrate
+
+# 5. Lancer le serveur en mode watch
+yarn start:dev
 ```
 
-## Deployment
+## Variables d'environnement
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+| Variable | Description |
+|---|---|
+| `PORT` | Port d'écoute de l'API (défaut : `3000`) |
+| `DATABASE_URL` | URL de connexion PostgreSQL |
+| `POSTGRES_USER` | Utilisateur PostgreSQL (pour le container) |
+| `POSTGRES_PASSWORD` | Mot de passe PostgreSQL (pour le container) |
+| `POSTGRES_DB` | Nom de la base (pour le container) |
+| `BETTER_AUTH_SECRET` | Clé secrète pour Better Auth (`openssl rand -base64 32`) |
+| `BETTER_AUTH_URL` | URL publique de l'API (ex : `http://localhost:3000`) |
+| `BETTER_AUTH_TRUSTED_ORIGINS` | Origines autorisées (séparées par des virgules) |
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+## Endpoints
+
+### Auth (`/auth`)
+
+| Méthode | Route | Description |
+|---|---|---|
+| `POST` | `/auth/sign-up/email` | Inscription |
+| `POST` | `/auth/sign-in/email` | Connexion (retourne un cookie de session) |
+| `POST` | `/auth/sign-out` | Déconnexion |
+| `GET` | `/auth/token` | Obtenir un JWT access token |
+
+### Parks (`/parks`)
+
+| Méthode | Route | Description |
+|---|---|---|
+| `GET` | `/parks` | Lister tous les parcs |
+| `POST` | `/parks` | Créer un parc |
+| `GET` | `/parks/:id` | Récupérer un parc |
+| `PATCH` | `/parks/:id` | Mettre à jour un parc |
+| `DELETE` | `/parks/:id` | Supprimer un parc |
+| `GET` | `/parks/:id/roller-coasters` | Lister les montagnes russes d'un parc (`?isOperational=true`) |
+
+### Roller Coasters (`/roller-coasters`)
+
+| Méthode | Route | Description |
+|---|---|---|
+| `GET` | `/roller-coasters` | Lister toutes les montagnes russes |
+| `POST` | `/roller-coasters` | Créer une montagne russe |
+| `GET` | `/roller-coasters/:id` | Récupérer une montagne russe |
+| `PATCH` | `/roller-coasters/:id` | Mettre à jour |
+| `DELETE` | `/roller-coasters/:id` | Supprimer |
+
+### Users (`/users`)
+
+| Méthode | Route | Description |
+|---|---|---|
+| `GET` | `/users` | Lister les utilisateurs |
+| `GET` | `/users/:id` | Récupérer un utilisateur |
+| `PATCH` | `/users/:id` | Mettre à jour |
+| `DELETE` | `/users/:id` | Supprimer |
+
+### Reviews (`/reviews`)
+
+| Méthode | Route | Description |
+|---|---|---|
+| `GET` | `/reviews` | Lister les avis |
+| `POST` | `/reviews` | Créer un avis (authentifié) |
+
+## Base de données
 
 ```bash
-$ yarn install -g @nestjs/mau
-$ mau deploy
+yarn db:migrate      # Créer et appliquer une nouvelle migration
+yarn db:generate     # Régénérer le client Prisma après modif du schéma
+yarn db:studio       # Ouvrir Prisma Studio (interface graphique)
+yarn db:push         # Pousser le schéma sans migration (prototypage)
+yarn db:reset        # Réinitialiser la base (supprime toutes les données)
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+PostgreSQL est exposé sur `localhost:4321` pour les outils locaux (Prisma Studio, TablePlus, psql).
 
-## Resources
+## Tests
 
-Check out a few resources that may come in handy when working with NestJS:
+```bash
+yarn test            # Tests unitaires
+yarn test:watch      # Mode watch
+yarn test:cov        # Couverture de code
+yarn test:e2e        # Tests end-to-end (Testcontainers — démarre un PostgreSQL éphémère)
+```
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+## Client HTTP (Bruno)
 
-## Support
+Une collection Bruno est disponible dans le dossier `./bruno`. Elle couvre toutes les routes avec un environnement `Development` préconfiguré sur `http://localhost:3000`.
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+Ouvrir Bruno → "Open Collection" → sélectionner le dossier `./bruno`.
 
-## Stay in touch
+## Structure du projet
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+```
+src/
+├── common/          # Décorateurs, pipes et filtres partagés
+├── lib/             # Configuration Better Auth
+├── parks/           # Module Parks (controller, service, repository, DTOs)
+├── roller-coasters/ # Module RollerCoasters
+├── reviews/         # Module Reviews
+├── users/           # Module Users
+├── prisma/          # Module Prisma (service injectable)
+└── main.ts          # Bootstrap de l'application
+prisma/
+└── schema.prisma    # Schéma de base de données
+bruno/               # Collection de requêtes HTTP
+```
